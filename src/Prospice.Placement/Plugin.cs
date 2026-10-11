@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using UnityEngine;
 namespace Prospice.Placement;
 
-[BepInPlugin(Id, "Prospice Gamepad Placement", "0.3.2")]
+[BepInPlugin(Id, "Prospice Gamepad Placement", "0.3.3")]
 public sealed class Plugin : BasePlugin
 {
     public const string Id = "prospice.gamepadplacement";
@@ -14,13 +14,15 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> Enabled = null!, SelfTest = null!, StorageGrid = null!;
     internal static ConfigEntry<float> MoveSpeed = null!, DeadZone = null!, Enter = null!, Exit = null!;
     Harmony? harmony;
+    PlacementDriver? driver;
+    internal static bool Ready { get; private set; }
     public override void Load()
     {
         Instance = this;
         Enabled = Config.Bind("Placement", "Enabled", true, "Enable gamepad placement for ordinary carried items.");
         StorageGrid = Config.Bind("Placement", "ShowTruckStorageGrid", true, "Show a subtle world-space glow grid on exposed truck storage while placing.");
         MoveSpeed = Config.Bind("Placement", "MoveMetersPerSecond", .5f, new ConfigDescription("RT + left stick positioning speed.", new AcceptableValueRange<float>(.05f, 2f)));
-        DeadZone = Config.Bind("Placement", "StickDeadZone", .18f, new ConfigDescription("Left stick dead zone.", new AcceptableValueRange<float>(0, .8f)));
+        DeadZone = Config.Bind("Placement", "StickDeadZone", .18f, new ConfigDescription("Left stick neutral zone for both positioning and quarter-turn rearming.", new AcceptableValueRange<float>(0, .8f)));
         Enter = Config.Bind("Placement", "TriggerEnter", .55f, new ConfigDescription("Fresh LT press threshold.", new AcceptableValueRange<float>(.4f, 1)));
         Exit = Config.Bind("Placement", "TriggerRelease", .35f, new ConfigDescription("LT release / neutral threshold.", new AcceptableValueRange<float>(.01f, .39f)));
         SelfTest = Config.Bind("Diagnostics", "RunSelfTests", false, "Developer diagnostics; keep false for normal play. Requires a verified disposable user profile: the surrounding game can accept menu input and reset/write saves.");
@@ -33,13 +35,39 @@ public sealed class Plugin : BasePlugin
             return;
         }
         harmony = new Harmony(Id);
-        harmony.PatchAll(typeof(Plugin).Assembly);
-        AddComponent<PlacementDriver>();
-        Log.LogInfo("Placement 0.3.2 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
+        try
+        {
+            // PatchAll can fail after installing some hooks. Do not enable placement until
+            // both the complete hook set and its watchdog have been created.
+            harmony.PatchAll(typeof(Plugin).Assembly);
+            driver = AddComponent<PlacementDriver>();
+            Ready = true;
+        }
+        catch
+        {
+            Stop();
+            throw;
+        }
+        Log.LogInfo("Placement 0.3.3 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
     }
     public override bool Unload()
     {
-        PlacementController.Cancel(); CarryHint.Dispose(); harmony?.UnpatchSelf(); return true;
+        return Stop();
+    }
+    bool Stop()
+    {
+        Ready = false;
+        var oldDriver = driver;
+        driver = null;
+        var errors = Cleanup.Run(
+            () => { if (oldDriver) oldDriver!.enabled = false; },
+            PlacementController.Shutdown,
+            CarryHint.Dispose,
+            RuntimeChecks.Cancel,
+            () => { harmony?.UnpatchSelf(); harmony = null; },
+            () => { if (oldDriver) UnityEngine.Object.Destroy(oldDriver); });
+        foreach (var error in errors) Log.LogError("Plugin shutdown failed: " + error);
+        return errors.Count == 0;
     }
 }
 
@@ -54,6 +82,7 @@ public sealed class PlacementDriver : MonoBehaviour
     }
     public void Update()
     {
+        if (!Plugin.Ready) return;
         PlacementController.Watchdog();
         RuntimeChecks.Advance();
         if (!tested && Rewired.ReInput.isReady && Time.realtimeSinceStartup > 20)
@@ -63,7 +92,7 @@ public sealed class PlacementDriver : MonoBehaviour
         }
     }
     public void LateUpdate() => CarryHint.Watchdog();
-    public void OnDisable() { PlacementController.Cancel(); CarryHint.Dispose(); }
+    public void OnDisable() { PlacementController.Cancel(); CarryHint.Dispose(); RuntimeChecks.Cancel(); }
     public void OnApplicationFocus(bool focus) { if (!focus) PlacementController.Cancel(); }
 
 }

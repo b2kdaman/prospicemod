@@ -1,6 +1,6 @@
 # Agreed placement behavior
 
-Status: local playtest 0.3.2. The new grid/orientation fixes pass standalone and offline checks; native integration evidence is from 0.3.0. Current in-game visual/controller acceptance remains manual.
+Status: source candidate 0.3.3; installed/published playtest 0.3.2. The new grid/orientation fixes pass standalone and offline checks; native integration evidence is from 0.3.0. Current in-game visual/controller acceptance remains manual.
 
 ## Controls and eligibility
 
@@ -8,7 +8,7 @@ Status: local playtest 0.3.2. The new grid/orientation fixes pass standalone and
 - Fresh LT press starts preview while an eligible item is held. Enter at 0.55; release below 0.35.
 - Left stick controls yaw/pitch in 90-degree increments. One deliberate dominant-axis deflection makes one turn; neutral is required before the next. There is no roll modifier.
 - Hold RT with the left stick to translate sideways relative to the entry camera and vertically in world Y. RT disables rotation while held. Retain the offset when RT is released; reset it when preview ends. Default translation speed 0.5 metres/second. The selected pose always seats the item bottom against actual support. On truck grids, ignore vertical offsets and anchor above the verified storage floor or stacked cargo; outside truck grids, vertical input chooses support height.
-- Stick dead zone 0.18; rotation triggers at 0.55 and requires return to 0.18 or below before another 90-degree step, independent of frame rate.
+- Default stick dead zone 0.18; rotation triggers at 0.55 and requires return to 0.18 or below before another 90-degree step, independent of frame rate. StickDeadZone also configures rotation rearming; activation is max(0.55, StickDeadZone + 0.01), keeping a distinct threshold even for large neutral zones.
 - LT release commits a valid placement; invalid release retains the held item.
 - B cancels; X cancels preview and performs ordinary drop. X wins over simultaneous LT release.
 - After cancellation/drop/invalid release, require neutral LT before rearming.

@@ -144,3 +144,10 @@ Final installed SHA256: `B36BE9C9E0E357F4818CB9503FBE7BD612A388E6C1239932411DAB5
 - No game launch, save access or settings restoration. RunSelfTests=false, Enabled=true, ShowTruckStorageGrid=true. Grid alpha remains 0.09. Native runtime/visual verification remains pending.
 
 Manual acceptance: aim at cargo bed and roof grid; hold RT and push vertical offsets far above/below the floor. Rotate through quarter turns and try large/off-centre items, tilted trucks, partial edges, cargo stacks and out-of-reach grid points. Preview must remain above the floor; invalid releases retain ownership. Confirm placement and subsequent native physics in-game. No claim is made that these guards replace the game's post-release collision simulation.
+
+
+## Review cleanup - 0.3.3 source candidate (2026-10-12)
+
+64 standalone checks pass, including configured rotation neutral-zone and multi-failure cleanup regressions. Release compilation succeeds with zero warnings/errors. Startup now rolls back partially installed hooks; unload disables/destroys the retained driver and clears diagnostics. The ordinary native release bridge is unchanged and now lives in GameIntegration.cs. See [review findings, component map and acceptance limits](code-review-0.3.3.md).
+
+These source/build changes are not installed or published. The existing 0.3.2 DLL/ZIP remain unchanged. No game was launched and no saves or player settings were accessed. Native lifecycle and controller acceptance remain pending.

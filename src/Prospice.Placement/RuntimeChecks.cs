@@ -29,6 +29,7 @@ internal static class RuntimeChecks
         catch (Exception e) { Plugin.Enabled.Value = false; Plugin.Instance.Log.LogError("SELFTEST FAILED: " + e); }
         finally { CleanupForces(); }
     }
+    internal static void Cancel() => CleanupForces();
     static void CleanupForces()
     {
         forceSamples.Clear();
@@ -347,7 +348,7 @@ internal static class RuntimeChecks
             Plugin.Instance.Log.LogInfo("Controller inventory: " + Rewired.ReInput.controllers.joystickCount + " connected joystick(s). Physical input/feel acceptance is separate.");
             Plugin.Instance.Log.LogInfo("SELFTEST geometry/release checks passed; waiting for post-physics velocity checks.");
         }
-        catch (Exception e) { Plugin.Enabled.Value = false; Plugin.Instance.Log.LogError("SELFTEST FAILED; placement disabled: " + e); }
+        catch (Exception e) { CleanupForces(); Plugin.Enabled.Value = false; Plugin.Instance.Log.LogError("SELFTEST FAILED; placement disabled: " + e); }
         finally { preview?.Dispose(); foreach (var go in created) if (go) { go.SetActive(false); Object.Destroy(go); } }
     }
 }

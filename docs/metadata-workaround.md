@@ -21,9 +21,9 @@ The recovered metadata is version **31**, 16,566,480 bytes. SHA-256:
 
 The installed original remains 16,566,504 bytes with its original hash. Recovery does not require patching its header, modifying GameAssembly.dll, or writing into process memory. The scanner opens only query/read process permissions and verifies the executable path before scanning. It writes only validated metadata, not a full process dump.
 
-## Current setup
+## Setup at the diagnostic checkpoint (historical)
 
-BepInEx **6.0.0-be.788+5b766a3** remains installed in the game folder with generated bindings. The diagnostic plugin was removed from `BepInEx/plugins` after the successful test and archived locally. The test process was closed. **The placement gameplay mod is not implemented yet.**
+BepInEx **6.0.0-be.788+5b766a3** remains installed in the game folder with generated bindings. The diagnostic plugin was removed from `BepInEx/plugins` after the successful test and archived locally. The test process was closed. At that checkpoint the gameplay mod had not yet been implemented. It is now implemented; see [the verified drop loop](verified-drop-loop.md) and [current source/build status](../README.md).
 
 Configuration in `BepInEx/config/BepInEx.cfg`:
 
@@ -50,15 +50,17 @@ PlayerInteraction exposes fields including:
 - `dropCheckRadius`, `maxDropAttempts`.
 - `playerHeldItem`, `actions`, `characterController`.
 
-Its runtime methods include `bvr()`, `bvs(Rigidbody, Vector3, Vector3, bool, Packable)`, `bvt(Rigidbody, Vector3, Vector3)`, `bvu(float)`, and `bvw()`. These signatures are verified; their exact semantics are not yet established. Do not label bvs or another candidate as the ordinary drop callback solely from its signature.
+Its runtime methods include `bvr()`, `bvs(Rigidbody, Vector3, Vector3, bool, Packable)`, `bvt(Rigidbody, Vector3, Vector3)`, `bvu(float)`, and `bvw()`. At this diagnostic checkpoint only the signatures were verified. Their subsequently established semantics are documented in [the verified drop loop](verified-drop-loop.md). Do not label bvs or another candidate as the ordinary drop callback solely from its signature.
 
 Pickupable exposes `rb`, `packable`, `holdOffset`, `angleOffset`, `OnPickup`, and pickup/stash state. Packable exposes `packed`, `joint`, and `ropes`. TruckBed exposes bed/body references, its packed flag, and a list of Packable objects. These make the placement integration substantially more tractable than the original stripped asset trees suggested.
 
-The metadata/runtime-access part of the gate has passed. The remaining prerequisite is tracing the actual X-drop and RT-throw callbacks and confirming their cleanup behavior before implementing placement.
+The metadata/runtime-access part of the gate has passed. Tracing the X-drop and RT-throw callbacks was the next prerequisite at that time; it has since been completed as recorded in the linked drop-loop report.
 
 ## Reproducing and building
 
-With the unmodified game running, recover metadata to a **new** ignored output directory:
+When reproducing runtime work, use an independently verified disposable game profile and complete backups; the game itself can process menu input and reset/write saves. Never launch automated diagnostics against the live user profile.
+
+With the unmodified game running in that verified environment, recover metadata to a **new** ignored output directory:
 
 ```powershell
 python -B .\tools\recover_runtime_metadata.py --pid <game-pid> --game-dir 'E:\SteamLibrary\steamapps\common\Prospice Demo' --output .\local\new-metadata-recovery

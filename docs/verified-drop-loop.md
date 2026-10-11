@@ -48,7 +48,7 @@ Pickup already calls Packable.bxg for packed items. Placement leaves normal subs
 
 ## Input and renderer integration
 
-- Rewired.et is this build's IGamepadTemplate interface; Rewired.ez supplies the real gamepad template GUID. Physical LT/RT, left stick, RB and B are read through that interface.
+- Rewired.et is this build's IGamepadTemplate interface; Rewired.ez supplies the real gamepad template GUID. Physical LT/RT, left stick and B are read through that interface. The obsolete RB/roll field was removed in source candidate 0.3.3.
 - Use is the existing action 31. Explicit ControllerType overloads select active controllers and detect keyboard/mouse takeover.
 - The generated zero-argument GetLastActiveController binding collides with a generic overload and throws an AOT exception. The explicit-type overload was runtime-tested and is used instead.
 - Harmony hooks PlayerInteraction.Update/OnDisable, FPActions.Update, FPInputManager.Update and FPController.dai. As of 0.2.1, native FPInputManager.Update runs normally to retain right-stick look, sensitivity, inversion and smoothing. Its generated OnJumpPressed field is muted only for that synchronous call and restored by a Harmony finalizer, including exception exits. The finalizer clears movement/sprint/jump fields while retaining LookInput. The verified native FPController.dai movement routine (RVA 0x474210) additionally clears horizontal components of ocp (velocity), ocs (desired velocity), and oct (air momentum), preserving vertical gravity.

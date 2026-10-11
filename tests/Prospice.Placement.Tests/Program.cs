@@ -114,4 +114,30 @@ foreach (var pose in seen)
 }
 Check(true, "All 24 rotated off-centre footprints stay above a tilted floor");
 Check(float.IsPositiveInfinity(StorageFloorMath.RootHeight(1, 0, 0, 0, 0, 0, 0, 0, 0, .045f)), "Unsafe vertical floor plane cannot produce a valid placement");
+// Drifting sticks must use the configured neutral zone for rotation as well as movement.
+turns.Reset();
+Check(turns.Step(.25f, -.2f, .3f) == (0, 0) && turns.Step(.55f, 0, .3f) == (1, 0),
+    "Configured larger neutral zone rearms a drifting stick");
+Check(turns.Step(1, 0, .3f) == (0, 0), "Configured dead zone still requires neutral between turns");
+turns.Reset(); turns.Step(.15f, 0, .1f);
+Check(turns.Step(1, 0, .1f) == (0, 0), "Smaller neutral zone cannot rearm outside its configured boundary");
+turns.Step(.1f, 0, .1f);
+Check(turns.Step(0, -1, .1f) == (0, -1), "Configured neutral boundary accepts signed pitch");
+turns.Reset(); turns.Step(.8f, 0, .8f);
+Check(turns.Step(.805f, 0, .8f) == (0, 0), "Large dead zone retains a distinct activation threshold");
+Check(turns.Step(1, 0, .8f) == (1, 0), "Maximum configured dead zone still permits a full-stick turn");
+var cleanupOrder = new List<string>();
+var firstFailure = new InvalidOperationException("grid disposal");
+var secondFailure = new InvalidOperationException("renderer restoration");
+var cleanupErrors = Cleanup.Run(
+    () => { cleanupOrder.Add("grid"); throw firstFailure; },
+    () => { cleanupOrder.Add("preview"); throw secondFailure; },
+    () => cleanupOrder.Add("aim"),
+    () => cleanupOrder.Add("unpatch"));
+Check(cleanupOrder.SequenceEqual(new[] { "grid", "preview", "aim", "unpatch" }),
+    "Cleanup attempts every restoration after multiple failures");
+Check(cleanupErrors.SequenceEqual(new[] { firstFailure, secondFailure }),
+    "Cleanup preserves all failures for diagnostic reporting");
+Check(Cleanup.Run(() => cleanupOrder.Add("done")).Count == 0,
+    "Successful cleanup reports no errors");
 Console.WriteLine($"{passed} checks passed.");

@@ -21,6 +21,8 @@
 
 ## Build and validation
 
+- Source candidate 0.3.3 is reviewed but not installed/published. It honors configured rotation neutral zones, gates partial startup, and cleans up its driver/diagnostics on unload. 64 standalone checks pass; native lifecycle/controller validation is still pending. See `docs/code-review-0.3.3.md`.
+
 - `tools/prepare-release.ps1` builds/tests/packages a clean committed checkpoint, verifies the ZIP round trip and keeps artifacts ignored. Never include game payloads, recovered metadata, generated bindings or user data in releases.
 - `tools/build-placement.ps1` builds the plugin; `tools/test-placement.ps1` runs the state tests.
 - `tools/install-placement.ps1` verifies the game hash and backs up any replaced plugin. `tools/remove-placement.ps1` archives only this plugin. Both require the game closed.

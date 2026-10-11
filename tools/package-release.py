@@ -1,9 +1,14 @@
 """Package an already built, clean source checkpoint. Run through prepare-release.ps1."""
-import hashlib, json, re, shutil, subprocess, tempfile, zipfile
+import argparse, hashlib, json, re, shutil, subprocess, tempfile, zipfile
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--standalone-checks', required=True, type=int, help='Passing count from prepare-release.ps1 test run')
+args = parser.parse_args()
+if args.standalone_checks < 1:
+    parser.error('standalone check count must be positive')
 def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
 def digest(path):
@@ -36,7 +41,7 @@ manifest = {
     'compatibility': {'unity': '2022.3.62f2', 'game_assembly_sha256': '511B68EBDE548CF7BFE4178B5F8F76CF9397B4C8821EE411079DD6225C7D339D',
         'bepinex': '6.0.0-be.788+5b766a3', 'il2cpp_interop': '1.5.3.0', 'harmonyx': '2.10.2.1', 'runtime': '6.0.7', 'sdk': '8.0.425',
         'requires_existing_matching_metadata_and_interop': True},
-    'acceptance': {'standalone_checks': 55, 'build': 'passed', 'current_native_runtime': 'not_tested',
+    'acceptance': {'standalone_checks': args.standalone_checks, 'build': 'passed', 'current_native_runtime': 'not_tested',
         'controller_and_visual': 'pending', 'publication': 'not_published', 'game_launched_for_packaging': False},
     'files': [{'path': p, 'bytes': (stage/p).stat().st_size, 'sha256': digest(stage/p)} for p in sorted(payload)],
 }

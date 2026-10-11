@@ -35,10 +35,13 @@ public sealed class QuarterTurnInput
 {
     bool armed;
     public void Reset() => armed = false;
-    public (int x, int y) Step(float x, float y)
+    public (int x, int y) Step(float x, float y, float deadZone = .18f)
     {
-        if (Math.Max(Math.Abs(x), Math.Abs(y)) <= .18f) { armed = true; return (0, 0); }
-        if (!armed || Math.Max(Math.Abs(x), Math.Abs(y)) < .55f) return (0, 0);
+        // Keep the default deliberate-deflection threshold; larger configured dead zones
+        // need a separate activation threshold to avoid turning on neutral stick drift.
+        float magnitude = Math.Max(Math.Abs(x), Math.Abs(y));
+        if (magnitude <= deadZone) { armed = true; return (0, 0); }
+        if (!armed || magnitude < Math.Max(.55f, deadZone + .01f)) return (0, 0);
         armed = false;
         return Math.Abs(x) >= Math.Abs(y) ? (Math.Sign(x), 0) : (0, Math.Sign(y));
     }

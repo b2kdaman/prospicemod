@@ -1,6 +1,8 @@
 # Prospice Gamepad Placement
 
-Local playtest build 0.3.2 for the Windows x64 Prospice Demo, Unity 2022.3.62f2. The installed plugin uses the existing interaction prompt rows, left-stick rotation, and RT positioning. The current changes pass standalone input/orientation tests and offline bed-mesh checks. Native runtime evidence is from 0.3.0; 0.3.2 still requires an in-game controller check.
+Source candidate **0.3.3** for the Windows x64 Prospice Demo, Unity 2022.3.62f2. The installed plugin and published ZIP remain **0.3.2**. The review fixes pass 64 standalone checks and compile cleanly; they have not been installed or playtested. Native runtime evidence is from 0.3.0. See the [review and follow-up validation](docs/code-review-0.3.3.md).
+
+[Download the published mod](https://b2kdaman.itch.io/prospice-gamepad-placement) | [Gameplay video](https://www.youtube.com/watch?v=8wn0nT1W1JI)
 
 ## Controls
 
@@ -42,7 +44,7 @@ Installed DLL:
 Configuration:
 `E:\SteamLibrary\steamapps\common\Prospice Demo\BepInEx\config\prospice.gamepadplacement.cfg`
 
-Defaults: Enabled=true, TriggerEnter=0.55, TriggerRelease=0.35, StickDeadZone=0.18, MoveMetersPerSecond=0.5, ShowTruckStorageGrid=true. Restart after changing configuration. Diagnostics.RunSelfTests is off for ordinary play. The optional self-tests create temporary objects and report results in `BepInEx\LogOutput.log`, but the surrounding game can still process menu input and write/reset saves. Do not run diagnostics against a live player profile. An independently verified disposable profile and full save backup are required; a hidden window or separate log file does not isolate user data.
+Defaults: Enabled=true, TriggerEnter=0.55, TriggerRelease=0.35, StickDeadZone=0.18, MoveMetersPerSecond=0.5, ShowTruckStorageGrid=true. StickDeadZone applies to both positioning and quarter-turn rearming. Rotation activates at max(0.55, StickDeadZone + 0.01), so raising the neutral zone above 0.55 still requires leaving it before a turn. Default controls are unchanged. Restart after changing configuration. Diagnostics.RunSelfTests is off for ordinary play. The optional self-tests create temporary objects and report results in `BepInEx\LogOutput.log`, but the surrounding game can still process menu input and write/reset saves. Do not run diagnostics against a live player profile. An independently verified disposable profile and full save backup are required; a hidden window or separate log file does not isolate user data.
 
 ## Removal
 
@@ -72,6 +74,7 @@ The loader's GlobalMetadataPath currently points to `C:/git/prospicemod/local/ru
 
 ## Implementation and evidence
 
+- [Code review, resolved findings and component map](docs/code-review-0.3.3.md)
 - [Verified pickup/drop/throw loop and integration details](docs/verified-drop-loop.md)
 - [Validation results and controller playtest checklist](docs/placement-validation.md)
 - [Agreed behavior](docs/placement-spec.md)

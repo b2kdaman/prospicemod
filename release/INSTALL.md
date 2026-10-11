@@ -1,4 +1,4 @@
-# Prospice Gamepad Placement 0.3.2 - playtest build
+# Prospice Gamepad Placement 0.3.3 - playtest build
 
 Windows x64 Prospice Demo, Unity 2022.3.62f2. Automated checks pass; current in-game/controller acceptance is pending. This ZIP contains the mod only, not the game or its mod loader.
 
@@ -27,9 +27,11 @@ Carry ordinary cargo, artifacts, toolboxes or supplies. Return LT to neutral, th
 
 ## Changes and limits
 
+This revision applies StickDeadZone to rotation rearming as well as positioning, rolls back partially installed hooks on startup failure, and removes the driver and pending diagnostics on unload.
+
 The build includes a faint cyan storage grid, filled cyan/red previews under scene effects, shared 6.25 cm grid spacing, flat grid-zero entry, exact quarter turns and storage-floor checks covering mesh and collider bounds. Missing floor support, blocking overlaps, walls and normal interaction reach prevent release. The cargo grid clears the rendered floor and has half the original opacity.
 
-55 standalone checks pass. Prior native integration evidence is from 0.3.0; 0.3.2 has not been launched for automated runtime testing. Check bed/rack appearance, controller controls, rotated items, stacks, tilted/moving supports, B/X cancellation and LT release yourself. Mesh bounds are conservative. Floor guards apply to preview and commit; subsequent native gravity, collision simulation and truck packing are unchanged. No save-format changes are introduced.
+The passing standalone check count is recorded from the packaging run in manifest.json. Prior native integration evidence is from 0.3.0; 0.3.3 has not been launched for automated runtime testing. Check bed/rack appearance, controller controls, rotated items, stacks, tilted/moving supports, B/X cancellation and LT release yourself. Mesh bounds are conservative. Floor guards apply to preview and commit; subsequent native gravity, collision simulation and truck packing are unchanged. No save-format changes are introduced.
 
 ## Remove or roll back
 

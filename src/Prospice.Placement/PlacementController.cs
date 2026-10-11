@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
 namespace Prospice.Placement;
 
 internal static class PlacementController
@@ -20,7 +19,6 @@ internal static class PlacementController
     static bool faulted, eligible, savedAiming, hintEligible;
     static FPActions? previewActions;
     public static bool Active => preview != null;
-    public static string Hint => target.Reason ?? "";
     internal static string PromptAction => !Active ? "Place manually" : target.Valid ? "Release to place" : "Cannot place";
     internal static bool ShowNativePrompts => hintEligible && frame == Time.frameCount && Context() &&
         Owner!.heldRigidbody && Owner.heldRigidbody == observedItem &&
@@ -32,7 +30,7 @@ internal static class PlacementController
         if (!owner || !owner.isActiveAndEnabled || !owner.inputManager || !owner.inputManager.Controlled) return;
         if (Owner != owner) { Cancel(); Owner = owner; frame = -1; observedItem = null; }
     }
-    static bool Context() => Plugin.Enabled.Value && !faulted && Owner != null && Owner && Owner.isActiveAndEnabled && Owner.inputManager &&
+    static bool Context() => Plugin.Ready && Plugin.Enabled.Value && !faulted && Owner != null && Owner && Owner.isActiveAndEnabled && Owner.inputManager &&
         Owner.inputManager.Controlled && Owner.inputManager.controlLock <= 0 && Time.timeScale > 0 && Application.isFocused &&
         (!UIMaster.Instance || !UIMaster.Instance.usingInterface) &&
         (!PauseManager.Instance || !PauseManager.Instance.paused) && (!Owner.repairManager || !Owner.repairManager.activeInHierarchy) &&
@@ -51,7 +49,7 @@ internal static class PlacementController
     }
     internal static void Tick()
     {
-        if (Owner == null || !Owner || frame == Time.frameCount) return;
+        if (!Plugin.Ready || Owner == null || !Owner || frame == Time.frameCount) return;
         frame = Time.frameCount;
         hintEligible = false;
         try
@@ -98,7 +96,7 @@ internal static class PlacementController
                 positionOffset = Vector3.ClampMagnitude(positionOffset + (moveAxis * x + Vector3.up * y) * Plugin.MoveSpeed.Value * Time.deltaTime, Owner.interactionDistance);
             else
             {
-                var step = turn.Step(pad.Stick.x, pad.Stick.y);
+                var step = turn.Step(pad.Stick.x, pad.Stick.y, Plugin.DeadZone.Value);
                 orientation.Turn(step.x, step.y);
             }
             if (translating) turn.Reset();
@@ -162,43 +160,23 @@ internal static class PlacementController
     {
         gate.Reset();
         hintEligible = false;
-        try
-        {
-            storageGrid?.Dispose(); storageGrid = null; turn.Reset();
-            preview?.Dispose();
-            if (previewActions != null && previewActions) previewActions.aiming = savedAiming;
-        }
-        finally { preview = null; item = null; previewActions = null; input.Reset(); }
+        var oldGrid = storageGrid;
+        var oldPreview = preview;
+        var oldActions = previewActions;
+        bool oldAiming = savedAiming;
+        storageGrid = null; preview = null; item = null; previewActions = null;
+        turn.Reset(); input.Reset();
+        foreach (var error in Cleanup.Run(
+            () => oldGrid?.Dispose(),
+            () => oldPreview?.Dispose(),
+            () => { if (oldActions) oldActions!.aiming = oldAiming; }))
+            Plugin.Instance.Log.LogError("Placement cleanup failed: " + error);
     }
-}
-
-internal static class GameIntegration
-{
-    internal static bool Commit(PlayerInteraction interaction, Rigidbody body, PlacementTarget target)
+    internal static void Shutdown()
     {
-        if (!target.Valid || target.Support == null || !target.Support || interaction.heldRigidbody != body) return false;
-        var inheritedVelocity = target.Support.attachedRigidbody ? target.Support.attachedRigidbody.GetPointVelocity(target.Position) : Vector3.zero;
-        // bvu adds cameraForward * argument + characterController.velocity as an impulse.
-        // Supply a stationary controller only for this synchronous call so walking causes no placement impulse.
-        // The real controller is restored in finally; no field offsets or guessed native pointers are used.
-        var stationary = new GameObject("Prospice.Placement.ReleaseVelocity");
-        stationary.SetActive(false);
-        var zeroVelocity = stationary.AddComponent<CharacterController>();
-        var original = interaction.characterController;
-        try
-        {
-            interaction.characterController = zeroVelocity;
-            interaction.bvu(0f);
-        }
-        finally { interaction.characterController = original; Object.Destroy(stationary); }
-        if (interaction.heldRigidbody) return false;
-        body.position = target.Position;
-        body.rotation = target.Rotation;
-        body.transform.SetPositionAndRotation(target.Position, target.Rotation);
-        body.velocity = inheritedVelocity;
-        body.angularVelocity = Vector3.zero;
-        body.WakeUp();
-        interaction.nly = .5f; // Same debounce applied by bvr after a normal drop.
-        return true;
+        Cancel();
+        Owner = null; observedItem = null;
+        frame = suppressFrame = dropFrame = -1;
+        faulted = eligible = false;
     }
 }
