@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net6.0</TargetFramework><LangVersion>latest</LangVersion><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><GameDir Condition="'$(GameDir)' == ''">E:\SteamLibrary\steamapps\common\Prospice Demo</GameDir></PropertyGroup>
+ <ItemGroup>
+  <Reference Include="$(GameDir)\BepInEx\core\BepInEx.Core.dll" Private="false" />
+  <Reference Include="$(GameDir)\BepInEx\core\BepInEx.Unity.IL2CPP.dll" Private="false" />
+  <Reference Include="$(GameDir)\BepInEx\core\Il2CppInterop.Runtime.dll" Private="false" />
+  <Reference Include="$(GameDir)\BepInEx\core\0Harmony.dll" Private="false" />
+  <Reference Include="$(GameDir)\BepInEx\interop\*.dll" Private="false" />
+ </ItemGroup>
+</Project>

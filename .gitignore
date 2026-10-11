@@ -1,0 +1,32 @@
+# Generated output and local research
+bin/
+obj/
+artifacts/
+local/
+dumps/
+backups/
+logs/
+*.log
+*.user
+*.suo
+.vs/
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+
+# Original game payloads and generated binaries
+*.dll
+*.exe
+*.pdb
+*.bundle
+*.assets
+*.resource
+*.unity3d
+global-metadata.dat
+Project Prospice_Data/
+
+# Python tool caches
+__pycache__/
+*.py[cod]
