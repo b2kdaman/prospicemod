@@ -19,7 +19,7 @@ Source and setup notes: https://github.com/b2kdaman/prospicemod
 3. Copy only `BepInEx/plugins/Prospice.Placement.dll` from this ZIP into the same relative location in the game directory. Keep one copy of this plugin. Do not place the whole ZIP inside plugins.
 4. Existing configuration is preserved. Defaults are created on first normal launch in `BepInEx/config/prospice.gamepadplacement.cfg`. Keep `Diagnostics.RunSelfTests=false`; a surrounding game process can accept menu input and reset/write saves even when diagnostic fixtures themselves are temporary. Automated game testing requires an independently verified disposable user profile.
 
-Phase 2 cargo belts also require a private surface cache generated from your own installed game. Use the source repository tools/build-cargo-cache.py and tools/check-cargo-cache.py with the pinned analysis dependencies, or run its source installer which performs both steps. The cache stays in BepInEx/cache and must not be redistributed. A missing cache leaves cargo packing native and logs a warning; ordinary placement still works.
+Cargo belts and graffiti require private mesh caches generated from your own installed game. Follow the source repository setup instructions and pinned analysis dependencies, then run tools/build-cargo-cache.py and tools/check-cargo-cache.py, plus tools/build-paint-cache.py and tools/check-paint.py, each with --game-dir pointing at your installation. The source installer also generates and verifies both caches. Caches stay in BepInEx/cache and must not be redistributed. Copying the DLL alone does not set up these features; ordinary placement does not require the caches.
 
 Defaults: Cargo.EnableFlatBelts=true, Enabled=true, ShowTruckStorageGrid=true, TriggerEnter=0.55, TriggerRelease=0.35, StickDeadZone=0.18, MoveMetersPerSecond=0.5. The ZIP includes no user configuration, so upgrades do not overwrite preferences.
 
@@ -29,13 +29,23 @@ Carry ordinary cargo, artifacts, toolboxes or supplies. Return LT to neutral, th
 
 While on foot and empty-handed, look at an exposed cargo deck or roof rack within interaction reach. The native panel shows **Secure cargo** and its button. Right-stick click (**R3**) is preferred; enabled player and system mappings are checked, with RB, LB, Y and D-pad directions as fallbacks. If all candidates are assigned, the action stays hidden. Release and press the displayed button to re-secure the targeted surface, including newly added loads. Blocked views, carried items, menus and vehicle control suppress the action. Existing belts are released and rebuilt on the next frame so deferred joint destruction cannot exclude old cargo.
 
+## Airbrush and paint
+
+Single taps of D-pad right cycle empty hands, camera and airbrush. The airbrush is free and available immediately; only paint buckets are purchased. Eight bucket colors cost 25 SP each and contain 1 litre. The sprayer starts empty and holds 250 ml.
+
+With the airbrush equipped, aim at a bucket and hold RT or left mouse to refill gradually. Drawing from different colors mixes the paint already in the tank. Aim at a paintable surface and hold the same input to spray. Near surfaces receive smaller marks; distant surfaces receive larger, softer marks. Hold LB and move the right stick up/down for opacity or left/right for brush size; no stick click is needed. Release LB to resume normal look/spray. Hold Use for two seconds to empty the tank. B/Escape stows the tool.
+
+The equipped HUD shows tank level, opacity and brush size. Its indicator follows the loaded/mixed color and turns gray when empty. Spraying plays a synthesized hiss. Looking at a bucket shows its remaining paint. Original bucket and hard-surface sprayer assets are embedded in the DLL.
+
 ## Changes and limits
 
-This revision applies StickDeadZone to rotation rearming as well as positioning, rolls back partially installed hooks on startup failure, and removes the driver and pending diagnostics on unload.
+0.5.0 adds paint buckets, gradual refill and color mixing, persistent graffiti, distance-dependent spray, controller adjustments, equipped-only HUD, first-person sprayer, spray audio and live color indication. Cargo packing uses contact-supported loads with crossed flat belts, gravity-projected deck anchors and painted hardware on both roof racks and truck beds, including supported stacks.
 
-The build includes a faint cyan storage grid, filled cyan/red previews under scene effects, shared 6.25 cm grid spacing, flat grid-zero entry, exact quarter turns and storage-floor checks covering mesh and collider bounds. Missing floor support, blocking overlaps, walls and normal interaction reach prevent release. The cargo grid clears the rendered floor and has half the original opacity.
+Placement retains a faint cyan storage grid, cyan/red previews, 6.25 cm spacing, exact quarter turns and support/overlap guards. Unsupported or blocked loads remain loose. Private geometry caches are required for the additional cargo/paint features.
 
-The passing standalone check count is recorded from the packaging run in manifest.json. Prior native integration evidence is from 0.3.0; 0.3.3 has not been launched for automated runtime testing. Check bed/rack appearance, controller controls, rotated items, stacks, tilted/moving supports, B/X cancellation and LT release yourself. Mesh bounds are conservative. Floor guards apply to preview and commit; subsequent native gravity, collision simulation and truck packing are unchanged. No save-format changes are introduced.
+Automated check counts and the exact source commit are recorded in manifest.json. Full native runtime, controller, visual and audio acceptance remains pending for this playtest. Check bed/rack belts, stacks, moving supports, equipment framing, graffiti on world surfaces and controls in normal play. Offline mesh checks and asset renders are not controller or visual acceptance.
+
+Paint amounts and graffiti are saved separately in ProspicePaint beside the native save, keyed to its exact checkpoint. Back up that folder together with the native save; the native save schema remains unchanged. Set Paint.Enabled=false to disable paint integration.
 
 ## Remove or roll back
 
@@ -44,7 +54,3 @@ Close Prospice, then remove only `BepInEx/plugins/Prospice.Placement.dll`, or re
 ## Verification
 
 manifest.json identifies the exact source commit, compatibility, acceptance state, and payload hashes/sizes. SHA256SUMS.txt covers every payload file and the manifest. The ZIP was extracted into a fresh directory and checked for unexpected paths and hash differences before delivery.
-
-## Paint candidate
-
-0.5.0 includes embedded original bucket/sprayer models and color textures. Run the source installer to generate and verify the additional private paint mesh cache. Paint purchases use the native shop and game currency; graffiti and paint amounts use exact-native-checkpoint sidecars in ProspicePaint beside the save. Preserve that folder in backups. Disable Paint.Enabled to stop paint integration. Native runtime/controller/visual acceptance remains pending; Blender renders are asset previews only.
