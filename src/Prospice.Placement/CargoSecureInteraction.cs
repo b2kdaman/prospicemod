@@ -45,7 +45,7 @@ internal static class CargoSecureInteraction
             // is deferred until end-of-frame, so rebuild on the next frame, not immediately.
             pending = bed; pendingFrame = Time.frameCount + 1;
             feedbackTarget = bed.GetInstanceID(); feedback = "Securing cargo"; feedbackUntil = Time.unscaledTime + 2;
-            bed.cxj();
+            foreach (var storage in CargoPacking.Related(bed).GroupBy(b => b.GetInstanceID()).Select(g => g.First())) storage.cxj();
         }
         catch (Exception error)
         {

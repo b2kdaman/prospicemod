@@ -1,5 +1,5 @@
 using Prospice.Placement;
-int passed = CargoTests.Run() + SecureTests.Run();
+int passed = CargoTests.Run() + SecureTests.Run() + PaintTests.Run();
 void Check(bool result, string name) { if (!result) throw new Exception(name); passed++; Console.WriteLine("PASS " + name); }
 PlacementGate Armed() { var g = new PlacementGate(); g.Step(true, 0, false, false); return g; }
 var gate = new PlacementGate();
@@ -140,4 +140,24 @@ Check(cleanupErrors.SequenceEqual(new[] { firstFailure, secondFailure }),
     "Cleanup preserves all failures for diagnostic reporting");
 Check(Cleanup.Run(() => cleanupOrder.Add("done")).Count == 0,
     "Successful cleanup reports no errors");
+var tap = new ToolCycleGate();
+Check(!tap.Step(true,true), "Held right on context entry cannot cycle");
+tap.Step(false,true);
+Check(tap.Step(true,true) && tap.Suppress, "Single right press cycles immediately and suppresses native shortcut");
+Check(!tap.Step(true,true), "Held right does not repeat");
+Check(!tap.Step(false,true) && !tap.Suppress, "Release immediately restores native actions");
+Check(tap.Step(true,true), "Next tap cycles without a timing window");
+tap.Step(false,false);
+Check(!tap.Step(true,true), "Interrupted control requires fresh release");
+tap.Step(false,true);
+Check(tap.Step(true,true), "Fresh tap after interruption cycles");
+var slot=PaintToolSlot.Empty;
+foreach(var expected in new[]{PaintToolSlot.Camera,PaintToolSlot.Airbrush,PaintToolSlot.Empty,PaintToolSlot.Camera})
+{
+    slot=ToolCycleGate.Next(slot,true);
+    Check(slot==expected,"Three-state tap cycle selects "+expected);
+}
+Check(ToolCycleGate.Next(PaintToolSlot.Camera,false)==PaintToolSlot.Empty,"No airbrush preserves native camera-to-empty toggle");
+Check(ToolCycleGate.Next(PaintToolSlot.Empty,false)==PaintToolSlot.Camera,"No airbrush preserves native empty-to-camera toggle");
+Check(ToolCycleGate.Next(PaintToolSlot.Airbrush,false)==PaintToolSlot.Empty,"Missing airbrush resolves to empty");
 Console.WriteLine($"{passed} checks passed.");

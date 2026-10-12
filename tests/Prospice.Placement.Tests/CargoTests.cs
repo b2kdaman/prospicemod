@@ -7,6 +7,11 @@ internal static class CargoTests
     {
         int passed = 0;
         void Check(bool result, string name) { if (!result) throw new Exception(name); passed++; Console.WriteLine("PASS Cargo: " + name); }
+        Check(CargoMath.InColumn(new(-.2f,.1f,-.2f),new(.2f,.5f,.2f),new(-1,0,-1),new(1,1,1)),"bed cargo discovered inside storage footprint");
+        Check(CargoMath.InColumn(new(-.2f,3,-.2f),new(.2f,4,.2f),new(-1,0,-1),new(1,1,1)),"stack above trigger ceiling remains a cargo candidate");
+        Check(CargoMath.InColumn(new(-.2f,5,-.2f),new(.2f,6,.2f),new(-1,2,-1),new(1,3,1)),"roof stack uses the same unbounded-height discovery");
+        Check(!CargoMath.InColumn(new(2,3,2),new(3,4,3),new(-1,0,-1),new(1,1,1)),"nearby objects outside deck footprint excluded");
+        Check(!CargoMath.InColumn(new(-.2f,0,-.2f),new(.2f,1,.2f),new(-1,2,-1),new(1,3,1)),"bed cargo below roof cannot be a roof load");
         var square = new[] { new Vector2(-1,-1), new Vector2(1,-1), new Vector2(1,1), new Vector2(-1,1) };
         Check(CargoMath.ProjectGravity(new(1,2,3),new(0,-9.81f,0),Vector3.Zero,Vector3.UnitY,out var level) && Vector3.Distance(level,new(1,0,3))<.00001f,"gravity projects shoulders straight down to level deck");
         var tiltedNormal=Vector3.Normalize(new Vector3(.5f,1,0));

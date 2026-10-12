@@ -149,8 +149,25 @@ internal sealed class CargoSurface : IDisposable
     internal CargoSurface(TruckBed bed, BoxCollider marker)
     {
         Bed = bed; Frame = new(marker);
-        meshes = new CargoMeshQueries(bed.bedrb.GetComponentsInChildren<MeshFilter>()
-            .Where(f => !f.GetComponentInParent<Packable>()));
+        // The rack's physics belongs to Cab while its painted visual mesh belongs
+        // to VisualBody. Search their nearest shared vehicle ancestor, not just Cab.
+        var root = bed.transform;
+        while (root.parent && bed.bedrb.transform != root && !bed.bedrb.transform.IsChildOf(root)) root = root.parent;
+        meshes = new CargoMeshQueries(root.GetComponentsInChildren<MeshFilter>()
+            .Where(f => !f.GetComponentInParent<Packable>() && NearDeck(f)));
+        bool NearDeck(MeshFilter filter)
+        {
+            var renderer = filter.GetComponent<MeshRenderer>();
+            if (!renderer || !renderer.enabled) return false;
+            var bounds = renderer.bounds;var min = Vector3.positiveInfinity;var max = Vector3.negativeInfinity;
+            for (int i=0;i<8;i++)
+            {
+                var p=Frame.Local(bounds.center+Vector3.Scale(bounds.extents,new Vector3((i&1)==0?-1:1,(i&2)==0?-1:1,(i&4)==0?-1:1)));
+                min=Vector3.Min(min,p);max=Vector3.Max(max,p);
+            }
+            return max.x>=Frame.Min.x && min.x<=Frame.Max.x && max.z>=Frame.Min.z && min.z<=Frame.Max.z &&
+                max.y>=Frame.Min.y-.32f && min.y<=Frame.Max.y+.12f;
+        }
     }
     internal bool Owns(Collider c) => c && !c.isTrigger && !c.GetComponentInParent<Packable>() &&
         (c.attachedRigidbody == Bed.bedrb || c.transform.IsChildOf(Bed.bed));

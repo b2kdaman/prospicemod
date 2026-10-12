@@ -58,18 +58,35 @@ internal static class CargoPacking
             var held = new HashSet<int>();
             foreach (var interaction in Object.FindObjectsOfType<PlayerInteraction>())
                 if (interaction.heldRigidbody) held.Add(interaction.heldRigidbody.GetInstanceID());
-            var center = marker.transform.TransformPoint(marker.center);
-            var half = Vector3.Scale(marker.size * .5f, marker.transform.lossyScale);
-            half = new(Mathf.Abs(half.x), Mathf.Abs(half.y), Mathf.Abs(half.z));
             var seen = new HashSet<int>();
-            foreach (var collider in Physics.OverlapBox(center, half, marker.transform.rotation, ~0, QueryTriggerInteraction.Ignore))
+            foreach (var item in Object.FindObjectsOfType<Packable>())
             {
-                var body = collider.attachedRigidbody;
-                if (!body || body == bed.bedrb || body.isKinematic || held.Contains(body.GetInstanceID()) || !seen.Add(body.GetInstanceID())) continue;
-                var item = body.GetComponent<Packable>();
-                if (!item || item.packed || item.joint || body.GetComponents<Joint>().Length != 0) continue;
-                var geometry = new CargoItemGeometry(item, body, surface.Frame);
-                geometries.Add(geometry.Id, geometry);
+                if (!item || item.packed || item.joint) continue;
+                var body = item.GetComponent<Rigidbody>();
+                if (!body || body == bed.bedrb || body.isKinematic || held.Contains(body.GetInstanceID()) || !seen.Add(body.GetInstanceID()) || body.GetComponents<Joint>().Length != 0) continue;
+                var shapes = body.GetComponentsInChildren<Collider>().Where(c => c && c.enabled && !c.isTrigger && c.attachedRigidbody == body).ToArray();
+                if (shapes.Length == 0) continue;
+                var min = Vector3.positiveInfinity; var max = Vector3.negativeInfinity;
+                foreach (var shape in shapes)
+                {
+                    var bounds = shape.bounds;
+                    for (int corner = 0; corner < 8; corner++)
+                    {
+                        var point = surface.Frame.Local(bounds.center + Vector3.Scale(bounds.extents, new Vector3((corner & 1)==0?-1:1,(corner & 2)==0?-1:1,(corner & 4)==0?-1:1)));
+                        min=Vector3.Min(min,point);max=Vector3.Max(max,point);
+                    }
+                }
+                System.Numerics.Vector3 V(Vector3 v) => new(v.x,v.y,v.z);
+                if (!CargoMath.InColumn(V(min), V(max), V(surface.Frame.Min), V(surface.Frame.Max))) continue;
+                try
+                {
+                    var geometry = new CargoItemGeometry(item, body, surface.Frame);
+                    geometries.Add(geometry.Id, geometry);
+                }
+                catch (Exception error)
+                {
+                    if (warned.Add(item.GetInstanceID())) Plugin.Instance.Log.LogWarning($"Cargo geometry unavailable for {item.name}: {error.Message}");
+                }
             }
             foreach (var geometry in geometries.Values) CargoGeometry.Contacts(surface, geometry, geometries);
             var plans = new Dictionary<int, CargoPlan>();
@@ -121,6 +138,29 @@ internal static class CargoPacking
             return false;
         }
         finally { foreach (var geometry in geometries.Values) geometry.Dispose(); }
+    }
+
+    static bool packingPair;
+    internal static IEnumerable<TruckBed> Related(TruckBed bed)
+    {
+        yield return bed;
+        foreach (var truck in Object.FindObjectsOfType<CarTipping>())
+        {
+            if (truck.truckBed != bed && truck.roofrack != bed) continue;
+            var other = truck.truckBed == bed ? truck.roofrack : truck.truckBed;
+            if (other && other != bed && other.isActiveAndEnabled) yield return other;
+        }
+    }
+    internal static void PackOtherStorage(TruckBed bed)
+    {
+        if (packingPair || !Plugin.Ready || !Plugin.CargoBelts.Value || !bed) return;
+        packingPair = true;
+        try
+        {
+            foreach (var other in Related(bed).Where(b => b != bed).GroupBy(b => b.GetInstanceID()).Select(g => g.First()))
+                other.cxi();
+        }
+        finally { packingPair = false; }
     }
 
     internal static bool ReleaseItem(Packable item)
@@ -229,6 +269,7 @@ internal static class CargoPacking
 internal static class CargoPackPatch
 {
     [HarmonyPrefix] static bool Prefix(TruckBed __instance) => !CargoPacking.TryPack(__instance);
+    [HarmonyPostfix] static void Postfix(TruckBed __instance) => CargoPacking.PackOtherStorage(__instance);
 }
 [HarmonyPatch(typeof(TruckBed), nameof(TruckBed.cxj))]
 internal static class CargoUnpackPatch

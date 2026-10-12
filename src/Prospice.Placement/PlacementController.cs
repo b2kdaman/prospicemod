@@ -54,7 +54,7 @@ internal static class PlacementController
         hintEligible = false;
         try
         {
-            if (!Context()) { Cancel(); return; }
+            if (PaintTool.Equipped || !Context()) { Cancel(); return; }
             if (observedItem != Owner.heldRigidbody)
             {
                 Cancel(); observedItem = Owner.heldRigidbody; eligible = Eligible(observedItem);

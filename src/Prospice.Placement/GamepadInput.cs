@@ -2,7 +2,7 @@ using Rewired;
 using UnityEngine;
 namespace Prospice.Placement;
 
-internal readonly record struct PadFrame(bool Connected, float LT, Vector2 Stick, float RT, bool Cancel, bool Menu);
+internal readonly record struct PadFrame(bool Connected, float LT, Vector2 Stick, float RT, bool Cancel, bool Menu, bool Right = false, bool LB = false, Vector2 RightStick = default);
 internal sealed class GamepadInput
 {
     int selected = -1;
@@ -32,7 +32,7 @@ internal sealed class GamepadInput
             if (pad == null) continue;
             selected = joystick.id;
             return new(true, pad.leftTrigger.value, pad.leftStick.value, pad.rightTrigger.value,
-                pad.b.justPressed, pad.start.justPressed || pad.back.justPressed);
+                pad.b.justPressed, pad.start.justPressed || pad.back.justPressed, pad.dPad.right.value, pad.leftBumper.value, pad.rightStick.value);
         }
         return default;
     }

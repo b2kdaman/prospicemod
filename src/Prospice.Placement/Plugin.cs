@@ -6,13 +6,13 @@ using System.Security.Cryptography;
 using UnityEngine;
 namespace Prospice.Placement;
 
-[BepInPlugin(Id, "Prospice Gamepad Placement", "0.4.1")]
+[BepInPlugin(Id, "Prospice Gamepad Placement", "0.5.0")]
 public sealed class Plugin : BasePlugin
 {
     public const string Id = "prospice.gamepadplacement";
     internal static Plugin Instance = null!;
-    internal static ConfigEntry<bool> Enabled = null!, SelfTest = null!, StorageGrid = null!, CargoBelts = null!;
-    internal static ConfigEntry<float> MoveSpeed = null!, DeadZone = null!, Enter = null!, Exit = null!;
+    internal static ConfigEntry<bool> Enabled = null!, SelfTest = null!, StorageGrid = null!, CargoBelts = null!, PaintEnabled = null!;
+    internal static ConfigEntry<float> MoveSpeed = null!, DeadZone = null!, Enter = null!, Exit = null!, PaintReach = null!;
     Harmony? harmony;
     PlacementDriver? driver;
     internal static bool Ready { get; private set; }
@@ -20,6 +20,8 @@ public sealed class Plugin : BasePlugin
     {
         Instance = this;
         Enabled = Config.Bind("Placement", "Enabled", true, "Enable gamepad placement for ordinary carried items.");
+        PaintEnabled = Config.Bind("Paint", "Enabled", true, "Enable purchasable paint equipment and persistent graffiti.");
+        PaintReach = Config.Bind("Paint", "SprayReach", 3f, new ConfigDescription("Maximum spray range in metres.", new AcceptableValueRange<float>(.2f, 3f)));
         CargoBelts = Config.Bind("Cargo", "EnableFlatBelts", true, "Replace cargo packing with supported stacks and gravity-projected flat belts. Disable to use native packing on the next vehicle entry.");
         StorageGrid = Config.Bind("Placement", "ShowTruckStorageGrid", true, "Show a subtle world-space glow grid on exposed truck storage while placing.");
         MoveSpeed = Config.Bind("Placement", "MoveMetersPerSecond", .5f, new ConfigDescription("RT + left stick positioning speed.", new AcceptableValueRange<float>(.05f, 2f)));
@@ -49,7 +51,7 @@ public sealed class Plugin : BasePlugin
             Stop();
             throw;
         }
-        Log.LogInfo("Placement 0.4.1 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
+        Log.LogInfo("Placement 0.5.0 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
     }
     public override bool Unload()
     {
@@ -62,6 +64,9 @@ public sealed class Plugin : BasePlugin
         driver = null;
         var errors = Cleanup.Run(
             () => { if (oldDriver) oldDriver!.enabled = false; },
+            PaintSession.Reset,
+            PaintShop.Clear,
+            PaintEquipment.Dispose,
             CargoSecureInteraction.Shutdown,
             CargoPacking.Shutdown,
             PlacementController.Shutdown,
@@ -97,7 +102,7 @@ public sealed class PlacementDriver : MonoBehaviour
         }
     }
     public void LateUpdate() => CarryHint.Watchdog();
-    public void OnDisable() { CargoSecureInteraction.Shutdown(); CargoPacking.Shutdown(); PlacementController.Cancel(); CarryHint.Dispose(); RuntimeChecks.Cancel(); }
+    public void OnDisable() { PaintSession.Reset(); PaintShop.Clear(); PaintEquipment.Dispose(); CargoSecureInteraction.Shutdown(); CargoPacking.Shutdown(); PlacementController.Cancel(); CarryHint.Dispose(); RuntimeChecks.Cancel(); }
     public void OnApplicationFocus(bool focus) { if (!focus) PlacementController.Cancel(); }
 
 }
@@ -109,6 +114,8 @@ internal static class InteractionPatch
     static bool Prefix(PlayerInteraction __instance)
     {
         PlacementController.Observe(__instance);
+        PaintTool.Tick(__instance);
+        if (PaintTool.Blocks(__instance)) return false;
         PlacementController.Tick();
         CargoSecureInteraction.Tick(__instance);
         return !PlacementController.BlockInteraction(__instance);
@@ -125,9 +132,9 @@ internal static class ActionsPatch
     [HarmonyPrefix, HarmonyPriority(Priority.First)]
     static bool Prefix(FPActions __instance)
     {
-        if (__instance.playerInteraction) PlacementController.Observe(__instance.playerInteraction);
+        if (__instance.playerInteraction) { PlacementController.Observe(__instance.playerInteraction); PaintTool.Tick(__instance.playerInteraction); }
         PlacementController.Tick();
-        return !PlacementController.BlockActions(__instance);
+        return !PaintTool.BlockActions && !PlacementController.BlockActions(__instance);
     }
 }
 [HarmonyPatch(typeof(FPController.FPInputManager), nameof(FPController.FPInputManager.Update))]
@@ -156,7 +163,7 @@ internal static class InputPatch
     {
         if (!__instance) return;
         try { RestoreJump(__instance, __state); }
-        finally { PlacementController.SuppressInput(__instance); }
+        finally { PlacementController.SuppressInput(__instance); PaintTool.SuppressLook(__instance); }
     }
 }
 
@@ -176,13 +183,15 @@ internal static class NativePromptPatch
 {
     [HarmonyPrefix] static void Prefix(ObjectHighlighter __instance, out Collider? __state)
     {
+        PaintHudLayout.Restore();
         __state = __instance.objectRenderer;
         CarryHint.Refresh(__instance);
         CargoSecureInteraction.Refresh(__instance);
+        PaintTool.Refresh(__instance);
     }
     [HarmonyFinalizer] static void Finalizer(ObjectHighlighter __instance, Collider? __state)
     {
         // The ordinary interaction system owns this reference outside the native layout pass.
-        if (__instance) __instance.objectRenderer = __state;
+        if (__instance) { __instance.objectRenderer = __state; PaintHudLayout.Apply(__instance); }
     }
 }

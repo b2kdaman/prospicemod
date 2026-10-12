@@ -7,4 +7,5 @@
   <Reference Include="$(GameDir)\BepInEx\core\0Harmony.dll" Private="false" />
   <Reference Include="$(GameDir)\BepInEx\interop\*.dll" Private="false" />
  </ItemGroup>
+ <ItemGroup><EmbeddedResource Include="../../assets/paint/*.json" LogicalName="Paint.%(Filename)%(Extension)" /><EmbeddedResource Include="../../assets/paint/*.png" LogicalName="Paint.%(Filename)%(Extension)" /></ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 # Prospice Gamepad Placement
 
-Source and locally installed playtest plugin **0.4.1** for the Windows x64 Prospice Demo, Unity 2022.3.62f2. Phase 2 adds contact-supported cargo packing, gravity-connected flat belts and painted connectors. The release build is clean; 112 standalone checks and 561 authored-deck ray checks pass. In-game visual and driving acceptance is pending. The previously published ZIP remains **0.3.2**. See [cargo behavior and validation](docs/cargo-belts.md).
+Locally installed candidate **0.5.0** adds purchasable paint buckets, an equipped sprayer and persistent graffiti. The build and 300 standalone checks pass, as does validation of 546 paint-query meshes. Native shop, controller, tree-swap, rendering and persistence acceptance remain pending. The published ZIP remains **0.3.2**. See [paint implementation and acceptance](docs/paint-system.md) and [cargo behavior](docs/cargo-belts.md).
 
 [Download the published mod](https://b2kdaman.itch.io/prospice-gamepad-placement) | [Gameplay video](https://www.youtube.com/watch?v=8wn0nT1W1JI)
 
@@ -108,3 +108,13 @@ Version 0.4.0 adds two perpendicular matte dark-gray flat belts, a center keeper
 `[Cargo] EnableFlatBelts = false` restores native packing on the next vehicle entry. Installation generates and validates a private mesh-query cache under `BepInEx/cache` from the installed game. The source installer needs Python and the pinned dependencies in `tools/requirements-analysis.txt`, installed in `local/python-deps` as described above. Never redistribute this cache. If it is missing or incompatible, the plugin logs the reason and uses native packing for the affected surface.
 
 Offline build, geometry, and placement checks do not establish in-game visual or driving acceptance. Do not launch diagnostics against a live save profile.
+
+## Paint equipment (0.5.0 candidate)
+
+The airbrush is automatically available in the tool inventory with an empty 250 ml tank. Only 1-liter paint buckets (25) are sold in the shop, in eight colors. Tap D-pad right to cycle **empty -> camera -> airbrush -> empty**. No airbrush purchase or pickup is required. Stowing frees the native hand slot and preserves paint in the sidecar save. RT/left mouse sprays, hold left mouse/RT while looking at a bucket gradually draws paint at 50 ml/s and mixes it with the current tank color, and B/Escape stows the inventory airbrush. Hold Use for two seconds away from buckets to discard the remaining color. Buckets show their percentage in the native interaction overlay. A 250 ml tank lasts two minutes of continuous spray.
+
+Original Blender models and eight textures are embedded in the DLL. Regenerate them with Blender 5.0 and tools/build-paint-assets.py. The source installer generates a private world geometry cache, including static batches, and validates it before replacing the plugin. Do not redistribute that game-derived cache. Paint sidecars live beside the native save under ProspicePaint; include this directory in save backups.
+
+The physical bucket model and collider are doubled in all dimensions; spray size and paint capacity remain unchanged. The airbrush is free.
+
+While equipped, hold **LB + right stick**: up/down changes alpha (5–100%), left/right changes brush size (25–200%). Native HUD rows show tank, alpha and size. The airbrush uses a close camera-attached model, a live mixed-color indicator and a spray hiss. These latest audio/visual changes still require in-game acceptance.

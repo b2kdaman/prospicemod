@@ -1,4 +1,4 @@
-# Prospice Gamepad Placement 0.4.1 - playtest build
+# Prospice Gamepad Placement 0.5.0 - playtest build
 
 Windows x64 Prospice Demo, Unity 2022.3.62f2. Automated checks pass; current in-game/controller acceptance is pending. This ZIP contains the mod only, not the game or its mod loader.
 
@@ -44,3 +44,7 @@ Close Prospice, then remove only `BepInEx/plugins/Prospice.Placement.dll`, or re
 ## Verification
 
 manifest.json identifies the exact source commit, compatibility, acceptance state, and payload hashes/sizes. SHA256SUMS.txt covers every payload file and the manifest. The ZIP was extracted into a fresh directory and checked for unexpected paths and hash differences before delivery.
+
+## Paint candidate
+
+0.5.0 includes embedded original bucket/sprayer models and color textures. Run the source installer to generate and verify the additional private paint mesh cache. Paint purchases use the native shop and game currency; graffiti and paint amounts use exact-native-checkpoint sidecars in ProspicePaint beside the save. Preserve that folder in backups. Disable Paint.Enabled to stop paint integration. Native runtime/controller/visual acceptance remains pending; Blender renders are asset previews only.

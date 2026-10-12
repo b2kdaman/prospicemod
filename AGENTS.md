@@ -49,3 +49,10 @@
 - Packing uses generated `TruckBed.cxi`, `cxj`, `Packable.bxg`, and `CarTipping.FixedUpdate` bindings. Preserve native list-enumeration safety during unpacking. All mesh-query colliders are detached from gameplay rigidbodies and disabled outside synchronous queries.
 
 - Version 0.4.1 adds deck-facing manual secure through native interaction rows. Prefer unused R3, scanning enabled player/system controller maps before selecting a fallback. Require a fresh press and defer repacking one frame after cxj so destroyed joints clear. 112 standalone checks and 561 deck rays pass; clean build and matching installed DLL, native runtime acceptance pending.
+
+## Paint candidate 0.5.0
+
+- Read docs/paint-system.md before modifying paint integration. Shop, save and camera bindings are verified statically; full native acceptance is pending. Do not describe Blender renders as in-game screenshots.
+- Original meshes/textures under assets/paint are embedded. Keep private 382 MB world geometry cache out of Git/releases. Its reader builds bounded lazy spatial indexes.
+- Native SaveManager.blz writes JSON; bma loads; bmb resets. Preserve exact-save-hash sidecars and user save backups. Never change native ItemStash enum or game save schema.
+- Current offline evidence: clean build, 300 checks, 546 finite indexed world meshes including 160 static batches. Physical equipment, camera framing, graffiti and tree swaps still need unlocked-desktop acceptance.

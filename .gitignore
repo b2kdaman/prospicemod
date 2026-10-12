@@ -30,3 +30,7 @@ Project Prospice_Data/
 # Python tool caches
 __pycache__/
 *.py[cod]
+
+# Blender automatic authoring backups
+*.blend1
+*.blend2

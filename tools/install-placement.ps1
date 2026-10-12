@@ -13,6 +13,10 @@ if (-not (Test-Path -LiteralPath (Join-Path $gamePath 'BepInEx\interop\Assembly-
 if ($LASTEXITCODE -ne 0) { throw 'Cargo surface cache generation failed; existing plugin was not replaced.' }
 & python -B (Join-Path $repoPath 'tools\check-cargo-cache.py') --game-dir $gamePath
 if ($LASTEXITCODE -ne 0) { throw 'Cargo surface cache validation failed; existing plugin was not replaced.' }
+& python -B (Join-Path $repoPath 'tools\build-paint-cache.py') --game-dir $gamePath
+if ($LASTEXITCODE -ne 0) { throw 'Paint surface cache generation failed; existing plugin was not replaced.' }
+& python -B (Join-Path $repoPath 'tools\check-paint.py') --game-dir $gamePath
+if ($LASTEXITCODE -ne 0) { throw 'Paint assets/cache validation failed; existing plugin was not replaced.' }
 $destination = Join-Path $gamePath 'BepInEx\plugins\Prospice.Placement.dll'
 if (Test-Path -LiteralPath $destination) {
     $backup = Join-Path $repoPath ('local\install-backups\' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-ffff'))

@@ -4,6 +4,11 @@ namespace Prospice.Placement;
 // Pure geometry shared by runtime packing and the standalone regression suite.
 internal static class CargoMath
 {
+    // The storage trigger's ceiling is not a cargo-height limit. Support tracing
+    // decides whether an overlapping load above the deck belongs to this storage.
+    internal static bool InColumn(Vector3 min, Vector3 max, Vector3 deckMin, Vector3 deckMax) =>
+        max.X >= deckMin.X && min.X <= deckMax.X && max.Z >= deckMin.Z && min.Z <= deckMax.Z && max.Y >= deckMin.Y - .04f;
+
     internal static float Cross(Vector2 a, Vector2 b, Vector2 c) =>
         (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
 

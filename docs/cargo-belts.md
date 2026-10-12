@@ -50,3 +50,17 @@ Manual acceptance: with a verified disposable profile, test small supplies, irre
 ## Local installation
 
 Installed with the game closed on 2026-10-12. Installed DLL SHA256 matches the build: `3B1DFD793157D2B3C2E13CEF3CC2B70B9E6883174FE1CACC50EDF5DA6DDDBFDF`. Previous DLL backed up under `local/install-backups/20261012-111956-0572`. Existing configuration was preserved and RunSelfTests remains false. No release was packaged or published.
+
+## Roof and bed coverage update
+
+Packing either storage also dispatches to the other active storage referenced by the same CarTipping component, with a recursion guard and the existing duplicate-joint protection. It does not depend on native entry code invoking both storage objects. Manual Secure cargo releases both surfaces and rebuilds them on the next frame.
+
+Candidate discovery now checks active Packable rigidbodies against the storage footprint without the trigger ceiling cutting off tall stacks. Contact resolution still requires a chain down to that deck; cargo under the roof is excluded from roof candidates. Held, kinematic and already-jointed items remain excluded. Geometry failure on one item is logged and no longer aborts discovery of all remaining cargo. Floating loads or loads without clear gravity routes remain loose.
+
+The plugin builds with zero warnings/errors; 291 standalone checks pass, including bed/roof footprint selection, tall stacks, below-roof exclusion and existing stack support/route checks. Actual belt coverage on a loaded truck remains an in-game acceptance check. No game was launched during this update.
+
+## Roof visual hierarchy correction
+
+Runtime log confirmed Rack fell back to native ropes because its rendered deck could not be matched. Read-only asset inspection shows Rack under Car/VisualBody/Upgrades/RoofRack while its physical support RoofRackCollider belongs to the separate Cab rigidbody. Surface probes now search the nearest shared ancestor of the storage marker and its rigidbody, filtering enabled mesh renderers to the deck bounds and excluding Packable cargo. Actual physical ownership and short-range matching to rendered triangles remain required; anchors still follow gravity and sample the live skin material/UVs.
+
+This fixes a lookup omission, not a verified gameplay result. The running game must be closed before installing this correction.
