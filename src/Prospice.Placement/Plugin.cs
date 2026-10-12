@@ -6,12 +6,12 @@ using System.Security.Cryptography;
 using UnityEngine;
 namespace Prospice.Placement;
 
-[BepInPlugin(Id, "Prospice Gamepad Placement", "0.3.3")]
+[BepInPlugin(Id, "Prospice Gamepad Placement", "0.4.1")]
 public sealed class Plugin : BasePlugin
 {
     public const string Id = "prospice.gamepadplacement";
     internal static Plugin Instance = null!;
-    internal static ConfigEntry<bool> Enabled = null!, SelfTest = null!, StorageGrid = null!;
+    internal static ConfigEntry<bool> Enabled = null!, SelfTest = null!, StorageGrid = null!, CargoBelts = null!;
     internal static ConfigEntry<float> MoveSpeed = null!, DeadZone = null!, Enter = null!, Exit = null!;
     Harmony? harmony;
     PlacementDriver? driver;
@@ -20,6 +20,7 @@ public sealed class Plugin : BasePlugin
     {
         Instance = this;
         Enabled = Config.Bind("Placement", "Enabled", true, "Enable gamepad placement for ordinary carried items.");
+        CargoBelts = Config.Bind("Cargo", "EnableFlatBelts", true, "Replace cargo packing with supported stacks and gravity-projected flat belts. Disable to use native packing on the next vehicle entry.");
         StorageGrid = Config.Bind("Placement", "ShowTruckStorageGrid", true, "Show a subtle world-space glow grid on exposed truck storage while placing.");
         MoveSpeed = Config.Bind("Placement", "MoveMetersPerSecond", .5f, new ConfigDescription("RT + left stick positioning speed.", new AcceptableValueRange<float>(.05f, 2f)));
         DeadZone = Config.Bind("Placement", "StickDeadZone", .18f, new ConfigDescription("Left stick neutral zone for both positioning and quarter-turn rearming.", new AcceptableValueRange<float>(0, .8f)));
@@ -48,7 +49,7 @@ public sealed class Plugin : BasePlugin
             Stop();
             throw;
         }
-        Log.LogInfo("Placement 0.3.3 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
+        Log.LogInfo("Placement 0.4.1 loaded; verified game hash; native bvu(float) release binding. Waiting for eligible on-foot item and fresh gamepad LT.");
     }
     public override bool Unload()
     {
@@ -61,6 +62,8 @@ public sealed class Plugin : BasePlugin
         driver = null;
         var errors = Cleanup.Run(
             () => { if (oldDriver) oldDriver!.enabled = false; },
+            CargoSecureInteraction.Shutdown,
+            CargoPacking.Shutdown,
             PlacementController.Shutdown,
             CarryHint.Dispose,
             RuntimeChecks.Cancel,
@@ -83,6 +86,8 @@ public sealed class PlacementDriver : MonoBehaviour
     public void Update()
     {
         if (!Plugin.Ready) return;
+        CargoSecureInteraction.Update();
+        CargoPacking.Update();
         PlacementController.Watchdog();
         RuntimeChecks.Advance();
         if (!tested && Rewired.ReInput.isReady && Time.realtimeSinceStartup > 20)
@@ -92,7 +97,7 @@ public sealed class PlacementDriver : MonoBehaviour
         }
     }
     public void LateUpdate() => CarryHint.Watchdog();
-    public void OnDisable() { PlacementController.Cancel(); CarryHint.Dispose(); RuntimeChecks.Cancel(); }
+    public void OnDisable() { CargoSecureInteraction.Shutdown(); CargoPacking.Shutdown(); PlacementController.Cancel(); CarryHint.Dispose(); RuntimeChecks.Cancel(); }
     public void OnApplicationFocus(bool focus) { if (!focus) PlacementController.Cancel(); }
 
 }
@@ -105,6 +110,7 @@ internal static class InteractionPatch
     {
         PlacementController.Observe(__instance);
         PlacementController.Tick();
+        CargoSecureInteraction.Tick(__instance);
         return !PlacementController.BlockInteraction(__instance);
     }
 }
@@ -172,6 +178,7 @@ internal static class NativePromptPatch
     {
         __state = __instance.objectRenderer;
         CarryHint.Refresh(__instance);
+        CargoSecureInteraction.Refresh(__instance);
     }
     [HarmonyFinalizer] static void Finalizer(ObjectHighlighter __instance, Collider? __state)
     {

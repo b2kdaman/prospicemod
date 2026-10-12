@@ -1,5 +1,5 @@
 using Prospice.Placement;
-int passed = 0;
+int passed = CargoTests.Run() + SecureTests.Run();
 void Check(bool result, string name) { if (!result) throw new Exception(name); passed++; Console.WriteLine("PASS " + name); }
 PlacementGate Armed() { var g = new PlacementGate(); g.Step(true, 0, false, false); return g; }
 var gate = new PlacementGate();

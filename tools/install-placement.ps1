@@ -8,6 +8,11 @@ if ((Get-FileHash -LiteralPath (Join-Path $gamePath 'GameAssembly.dll') -Algorit
 $source = Join-Path $repoPath 'src\Prospice.Placement\bin\Release\net6.0\Prospice.Placement.dll'
 if (-not (Test-Path -LiteralPath $source)) { throw 'Run tools/build-placement.ps1 first.' }
 if (-not (Test-Path -LiteralPath (Join-Path $gamePath 'BepInEx\interop\Assembly-CSharp.dll'))) { throw 'The verified loader and generated bindings are required; see docs/metadata-workaround.md.' }
+# Private mesh data is generated locally; never include it in distributable ZIPs.
+& python -B (Join-Path $repoPath 'tools\build-cargo-cache.py') --game-dir $gamePath
+if ($LASTEXITCODE -ne 0) { throw 'Cargo surface cache generation failed; existing plugin was not replaced.' }
+& python -B (Join-Path $repoPath 'tools\check-cargo-cache.py') --game-dir $gamePath
+if ($LASTEXITCODE -ne 0) { throw 'Cargo surface cache validation failed; existing plugin was not replaced.' }
 $destination = Join-Path $gamePath 'BepInEx\plugins\Prospice.Placement.dll'
 if (Test-Path -LiteralPath $destination) {
     $backup = Join-Path $repoPath ('local\install-backups\' + [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss-ffff'))

@@ -1,4 +1,4 @@
-# Prospice Gamepad Placement 0.3.3 - playtest build
+# Prospice Gamepad Placement 0.4.1 - playtest build
 
 Windows x64 Prospice Demo, Unity 2022.3.62f2. Automated checks pass; current in-game/controller acceptance is pending. This ZIP contains the mod only, not the game or its mod loader.
 
@@ -19,11 +19,15 @@ Source and setup notes: https://github.com/b2kdaman/prospicemod
 3. Copy only `BepInEx/plugins/Prospice.Placement.dll` from this ZIP into the same relative location in the game directory. Keep one copy of this plugin. Do not place the whole ZIP inside plugins.
 4. Existing configuration is preserved. Defaults are created on first normal launch in `BepInEx/config/prospice.gamepadplacement.cfg`. Keep `Diagnostics.RunSelfTests=false`; a surrounding game process can accept menu input and reset/write saves even when diagnostic fixtures themselves are temporary. Automated game testing requires an independently verified disposable user profile.
 
-Defaults: Enabled=true, ShowTruckStorageGrid=true, TriggerEnter=0.55, TriggerRelease=0.35, StickDeadZone=0.18, MoveMetersPerSecond=0.5. The ZIP includes no user configuration, so upgrades do not overwrite preferences.
+Phase 2 cargo belts also require a private surface cache generated from your own installed game. Use the source repository tools/build-cargo-cache.py and tools/check-cargo-cache.py with the pinned analysis dependencies, or run its source installer which performs both steps. The cache stays in BepInEx/cache and must not be redistributed. A missing cache leaves cargo packing native and logs a warning; ordinary placement still works.
+
+Defaults: Cargo.EnableFlatBelts=true, Enabled=true, ShowTruckStorageGrid=true, TriggerEnter=0.55, TriggerRelease=0.35, StickDeadZone=0.18, MoveMetersPerSecond=0.5. The ZIP includes no user configuration, so upgrades do not overwrite preferences.
 
 ## Controls
 
 Carry ordinary cargo, artifacts, toolboxes or supplies. Return LT to neutral, then hold LT to preview. Left stick rotates in 90-degree grid-relative steps; return it to neutral between turns. Right stick retains camera look. RT + left stick positions the item; on truck grids vertical offset is ignored and the item seats above verified floor/cargo support. Release LT to place a cyan preview. A red preview remains held. B cancels; X/mapped Use performs the ordinary drop. Walking is stopped during preview. Winch anchors and deployment tools retain native behavior.
+
+While on foot and empty-handed, look at an exposed cargo deck or roof rack within interaction reach. The native panel shows **Secure cargo** and its button. Right-stick click (**R3**) is preferred; enabled player and system mappings are checked, with RB, LB, Y and D-pad directions as fallbacks. If all candidates are assigned, the action stays hidden. Release and press the displayed button to re-secure the targeted surface, including newly added loads. Blocked views, carried items, menus and vehicle control suppress the action. Existing belts are released and rebuilt on the next frame so deferred joint destruction cannot exclude old cargo.
 
 ## Changes and limits
 
