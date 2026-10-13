@@ -1,8 +1,8 @@
 # Prospice Gamepad Placement
 
-Locally installed candidate **0.5.0** adds purchasable paint buckets, an equipped sprayer and persistent graffiti. The build and 300 standalone checks pass, as does validation of 546 paint-query meshes. Native shop, controller, tree-swap, rendering and persistence acceptance remain pending. The published ZIP remains **0.3.2**. See [paint implementation and acceptance](docs/paint-system.md) and [cargo behavior](docs/cargo-belts.md).
+Locally installed candidate **0.5.0** adds purchasable paint buckets, an equipped sprayer and persistent graffiti. The build and 300 standalone checks pass, as does validation of 546 paint-query meshes. Native shop, controller, tree-swap, rendering and persistence acceptance remain pending. The published itch.io ZIP is **0.5.0 playtest** (300 standalone checks; archive extracted and hash-verified). See [paint implementation and acceptance](docs/paint-system.md) and [cargo behavior](docs/cargo-belts.md).
 
-[Download the published mod](https://b2kdaman.itch.io/prospice-gamepad-placement) | [Gameplay video](https://www.youtube.com/watch?v=8wn0nT1W1JI)
+[Download the published mod](https://b2kdaman.itch.io/prospice-gamepad-placement) | [Gameplay video](https://www.youtube.com/watch?v=XgQrsZbB_RA)
 
 ## Controls
 
